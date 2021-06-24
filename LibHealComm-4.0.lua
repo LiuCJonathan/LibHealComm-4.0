@@ -1,7 +1,7 @@
 if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then return end
 
 local major = "LibHealComm-4.0"
-local minor = 93
+local minor = 94
 assert(LibStub, format("%s requires LibStub.", major))
 
 local HealComm = LibStub:NewLibrary(major, minor)
@@ -1138,7 +1138,9 @@ if( playerClass == "PRIEST" ) then
 		hotData[Renew] = {coeff = 1, interval = 3, ticks = 5, levels = {8, 14, 20, 26, 32, 38, 44, 50, 56, 60, 65, 70}, averages = {
 			45, 100, 175, 245, 315, 400, 510, 650, 810, 970, 1010, 1110 }}
 		hotData[GreaterHealHot] = hotData[Renew]
-		hotData[Renewal] = {coeff = 0, interval = 3, ticks = 3, levels = {70}, averages = {150}}
+		if GetLocale() == "enUS" then -- Disable T4 bonus for non english users as it shares the name with Renew
+			hotData[Renewal] = {coeff = 0, interval = 3, ticks = 3, levels = {70}, averages = {150}}
+		end
 
 		spellData[FlashHeal] = {coeff = 1.5 / 3.5, levels = {20, 26, 32, 38, 44, 50, 56, 61, 67}, averages = {
 			{avg(193, 237), avg(194, 239), avg(196, 241), avg(198, 243),  avg(200, 245), avg(202, 247)},
@@ -1414,12 +1416,25 @@ if( playerClass == "HUNTER" ) then
 	LoadClassData = function()
 		local MendPet = GetSpellInfo(136)
 
-		spellData[MendPet] = { interval = 1, levels = { 12, 20, 28, 36, 44, 52, 60 }, ticks = 5, averages = {100, 190, 340, 515, 710, 945, 1225 } }
+		if isTBC then
+			hotData[MendPet] = { interval = 3, levels = { 12, 20, 28, 36, 44, 52, 60, 68 }, ticks = 5, averages = {125, 250, 450, 700, 1000, 1400, 1825, 2375 } }
+		else
+			spellData[MendPet] = { interval = 1, levels = { 12, 20, 28, 36, 44, 52, 60 }, ticks = 5, averages = {100, 190, 340, 515, 710, 945, 1225 } }
+		end
 
 		itemSetsData["Giantstalker"] = {16851, 16849, 16850, 16845, 16848, 16852, 16846, 16847}
 
 		GetHealTargets = function(bitType, guid, healAmount, spellID)
 			return compressGUID[UnitGUID("pet")], healAmount
+		end
+
+		CalculateHotHealing = function(guid, spellID)
+			local spellName, spellRank = GetSpellInfo(spellID), SpellIDToRank[spellID]
+			local amount = getBaseHealAmount(hotData, spellName, spellRank)
+
+			if( equippedSetCache["Giantstalker"] >= 3 ) then amount = amount * 1.1 end
+
+			return HOT_HEALS, ceil(amount / hotData[spellName].ticks), hotData[spellName].ticks, hotData[spellName].interval
 		end
 
 		CalculateHealing = function(guid, spellID)
