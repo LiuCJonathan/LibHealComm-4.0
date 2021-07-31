@@ -398,7 +398,7 @@ function HealComm:GetGUIDUnitMapTable()
 end
 
 
--- Custom function for HealBarsClassic that returns heals within a timeframe
+-- Get heal amount using the passed filters (supports custom start time)
 function HealComm:GetTimeframeHealAmount(guid, bitFlag, startTime, time, ignoreGUID,srcGUID)
 
 	local healFrom,healTime
