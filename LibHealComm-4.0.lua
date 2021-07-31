@@ -2077,8 +2077,8 @@ local function parseHealEnd(casterGUID, pending, checkField, spellID, interrupte
 
 	HealComm.callbacks:Fire("HealComm_HealStopped", casterGUID, spellID, bitType, interrupted, unpack(tempPlayerList))
 	
-	--Tranq only results in a HealEnd for the casting Druid, so special logic must clear its heal on nearby players
-	if spellName == 'Tranquility' then 
+	--Tranq only results in a HealEnd for the casting Druid in TBC, so the heal must be cleared on targets
+	if isTBC and spellName == 'Tranquility' then 
 		wipe(tempPlayerList)
 		for i=#(pending), 1, -5 do tinsert(tempPlayerList, pending[i - 4]) end
 
